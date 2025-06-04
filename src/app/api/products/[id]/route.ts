@@ -8,30 +8,30 @@ import { toNodeReadable } from "@/lib/toNodeReadable";
 
 /* ---------- GET /api/products/[id] ---------- */
 export async function GET(
-  _req: NextRequest,
-  context: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   await dbConnect();
 
-  const { id } = await context.params;
-
   const product = await Product.findById(id).lean();
-  if (!product)
+  if (!product) {
     return NextResponse.json(
       { message: "Không tìm thấy sản phẩm" },
       { status: 404 }
     );
+  }
 
   return NextResponse.json(product);
 }
 
-/* ---------- PUT ---------- */
+/* ---------- PUT /api/products/[id] ---------- */
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   await dbConnect();
-  const { id } = context.params;
 
   const uploadDir = path.join(process.cwd(), "public/uploads");
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -55,9 +55,13 @@ export async function PUT(
   const updated = await Product.findByIdAndUpdate(
     id,
     {
-      name: fields.name?.[0],
-      description: fields.description?.[0],
-      price: Number(fields.price?.[0]),
+      name: Array.isArray(fields.name) ? fields.name[0] : fields.name,
+      description: Array.isArray(fields.description)
+        ? fields.description[0]
+        : fields.description,
+      price: Number(
+        Array.isArray(fields.price) ? fields.price[0] : fields.price
+      ),
       ...(imagePath && { image: imagePath }),
     },
     { new: true }
@@ -66,20 +70,21 @@ export async function PUT(
   return NextResponse.json(updated);
 }
 
-/* ---------- DELETE ---------- */
+/* ---------- DELETE /api/products/[id] ---------- */
 export async function DELETE(
-  _req: NextRequest,
-  context: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   await dbConnect();
-  const { id } = context.params;
 
   const deleted = await Product.findByIdAndDelete(id);
-  if (!deleted)
+  if (!deleted) {
     return NextResponse.json(
       { message: "Không tìm thấy sản phẩm để xoá" },
       { status: 404 }
     );
+  }
 
   return NextResponse.json({ message: "Xoá sản phẩm thành công", deleted });
 }
