@@ -8,13 +8,12 @@ import { toNodeReadable } from "@/lib/toNodeReadable";
 
 /* ---------- GET /api/products/[id] ---------- */
 export async function GET(
-  req: NextRequest,
-  contextPromise: Promise<{ params: { id: string } }>
+  _req: NextRequest,
+  context: { params: { id: string } }
 ) {
-  const { params } = await contextPromise; // ✅ await toàn bộ context
-  const { id } = await params;
-
   await dbConnect();
+
+  const { id } = await context.params;
 
   const product = await Product.findById(id).lean();
   if (!product)
@@ -29,10 +28,10 @@ export async function GET(
 /* ---------- PUT ---------- */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   await dbConnect();
-  const { id } = params;
+  const { id } = context.params;
 
   const uploadDir = path.join(process.cwd(), "public/uploads");
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -70,10 +69,10 @@ export async function PUT(
 /* ---------- DELETE ---------- */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   await dbConnect();
-  const { id } = params;
+  const { id } = context.params;
 
   const deleted = await Product.findByIdAndDelete(id);
   if (!deleted)
