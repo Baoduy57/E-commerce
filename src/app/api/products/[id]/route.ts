@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import Product from "@/models/Product";
-import formidable, { Fields, Files } from "formidable";
+import formidable from "formidable";
 import { toNodeReadable } from "@/lib/toNodeReadable";
 import cloudinary from "@/lib/cloudinary";
 
-// 👇 Interface cho context
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 /* ---------- GET /api/products/[id] ---------- */
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(_req: NextRequest, { params }: any) {
+  // params: { id: string }
   await dbConnect();
 
-  const { id } = context.params;
-
+  const { id } = await params;
   const product = await Product.findById(id).lean();
 
   if (!product) {
@@ -31,26 +24,27 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 }
 
 /* ---------- PUT /api/products/[id] ---------- */
-export async function PUT(req: NextRequest, context: RouteContext) {
+export async function PUT(req: NextRequest, { params }: any) {
   await dbConnect();
-
-  const { id } = context.params;
+  const { id } = await params;
 
   const form = formidable({ keepExtensions: true });
-  const { fields, files } = await new Promise<{ fields: Fields; files: Files }>(
-    (res, rej) =>
-      form.parse(toNodeReadable(req) as any, (err, flds, fls) =>
-        err ? rej(err) : res({ fields: flds, files: fls })
-      )
+  const { fields, files } = await new Promise<{
+    fields: formidable.Fields;
+    files: formidable.Files;
+  }>((res, rej) =>
+    form.parse(toNodeReadable(req) as any, (err, flds, fls) =>
+      err ? rej(err) : res({ fields: flds, files: fls })
+    )
   );
 
   let imagePath: string | undefined;
   if (files.image) {
     const file = Array.isArray(files.image) ? files.image[0] : files.image;
-    const uploadResult = await cloudinary.uploader.upload(file.filepath, {
+    const upload = await cloudinary.uploader.upload(file.filepath, {
       folder: "products",
     });
-    imagePath = uploadResult.secure_url;
+    imagePath = upload.secure_url;
   }
 
   const updated = await Product.findByIdAndUpdate(
@@ -68,13 +62,11 @@ export async function PUT(req: NextRequest, context: RouteContext) {
 }
 
 /* ---------- DELETE /api/products/[id] ---------- */
-export async function DELETE(_req: NextRequest, context: RouteContext) {
+export async function DELETE(_req: NextRequest, { params }: any) {
   await dbConnect();
-
-  const { id } = context.params;
+  const { id } = await params;
 
   const deleted = await Product.findByIdAndDelete(id);
-
   if (!deleted) {
     return NextResponse.json(
       { message: "Không tìm thấy sản phẩm để xoá" },
@@ -82,5 +74,8 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
     );
   }
 
-  return NextResponse.json({ message: "Xoá sản phẩm thành công", deleted });
+  return NextResponse.json({
+    message: "Xoá sản phẩm thành công",
+    deleted,
+  });
 }
