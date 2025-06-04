@@ -7,10 +7,13 @@ import path from "path";
 import { toNodeReadable } from "@/lib/toNodeReadable";
 
 /* ---------- GET /api/products/[id] ---------- */
-export async function GET(_req: NextRequest, ctx: { params: { id: string } }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   await dbConnect();
 
-  const { id } = await ctx.params; // 🔑 phải await
+  const { id } = await params;
 
   const product = await Product.findById(id).lean();
   if (!product)
@@ -25,10 +28,10 @@ export async function GET(_req: NextRequest, ctx: { params: { id: string } }) {
 /* ---------- PUT ---------- */
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   await dbConnect();
-  const { id } = await context.params; // ⬅️
+  const { id } = params;
 
   const uploadDir = path.join(process.cwd(), "public/uploads");
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -66,10 +69,10 @@ export async function PUT(
 /* ---------- DELETE ---------- */
 export async function DELETE(
   _req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   await dbConnect();
-  const { id } = await context.params; // ⬅️
+  const { id } = params;
 
   const deleted = await Product.findByIdAndDelete(id);
   if (!deleted)

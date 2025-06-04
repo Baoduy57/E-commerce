@@ -1,6 +1,6 @@
 import mongoose, { Schema, Types } from "mongoose";
 
-// Kiểu interface dùng khi xử lý dữ liệu từ MongoDB (lean object)
+// Kiểu dữ liệu của sản phẩm
 export interface IProduct {
   _id: Types.ObjectId | string;
   name: string;
@@ -9,18 +9,22 @@ export interface IProduct {
   image?: string;
 }
 
-const ProductSchema = new Schema<IProduct>({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  image: { type: String, default: "" },
-});
+// Schema cho MongoDB
+const ProductSchema = new Schema<IProduct>(
+  {
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true },
+    image: { type: String, default: "" },
+  },
+  {
+    timestamps: true, // ✅ Tuỳ chọn: tự thêm createdAt / updatedAt
+  }
+);
 
-// Lấy ra type document tự động từ schema
-type ProductDocument = mongoose.HydratedDocument<IProduct>;
-
+// Nếu model đã tồn tại (hot reload dev mode), dùng lại
 const Product =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
 
 export default Product;
-export type { ProductDocument };
+export type ProductDocument = mongoose.HydratedDocument<IProduct>;
