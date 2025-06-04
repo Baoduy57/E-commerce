@@ -2,11 +2,12 @@ import { notFound } from "next/navigation";
 import Product, { IProduct } from "@/models/Product";
 import { dbConnect } from "@/lib/db";
 
-export default async function ProductDetailPage(
-  ctx: { params: { id: string } } // ctx là promise
-) {
-  // 🔑 cần await
-  const { id } = await ctx.params; // hoặc: const { params } = await ctx;
+type Props = {
+  params: { id: string };
+};
+
+export default async function ProductDetailPage({ params }: Props) {
+  const { id } = await params;
 
   await dbConnect();
 
