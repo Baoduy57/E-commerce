@@ -8,12 +8,13 @@ import { toNodeReadable } from "@/lib/toNodeReadable";
 
 /* ---------- GET /api/products/[id] ---------- */
 export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  contextPromise: Promise<{ params: { id: string } }>
 ) {
-  await dbConnect();
-
+  const { params } = await contextPromise; // ✅ await toàn bộ context
   const { id } = await params;
+
+  await dbConnect();
 
   const product = await Product.findById(id).lean();
   if (!product)
