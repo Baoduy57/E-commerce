@@ -5,14 +5,19 @@ import formidable, { Fields, Files } from "formidable";
 import { toNodeReadable } from "@/lib/toNodeReadable";
 import cloudinary from "@/lib/cloudinary";
 
+// 👇 Interface cho context
+interface RouteContext {
+  params: {
+    id: string;
+  };
+}
+
 /* ---------- GET /api/products/[id] ---------- */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req: NextRequest, context: RouteContext) {
   await dbConnect();
 
-  const { id } = params; // ✅ KHÔNG await
+  const { id } = context.params;
+
   const product = await Product.findById(id).lean();
 
   if (!product) {
@@ -26,23 +31,18 @@ export async function GET(
 }
 
 /* ---------- PUT /api/products/[id] ---------- */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: RouteContext) {
   await dbConnect();
-  const { id } = params; // ✅ KHÔNG await
+
+  const { id } = context.params;
 
   const form = formidable({ keepExtensions: true });
-
-  const { fields, files } = await new Promise<{
-    fields: Fields;
-    files: Files;
-  }>((resolve, reject) => {
-    form.parse(toNodeReadable(req) as any, (err, flds, fls) =>
-      err ? reject(err) : resolve({ fields: flds, files: fls })
-    );
-  });
+  const { fields, files } = await new Promise<{ fields: Fields; files: Files }>(
+    (res, rej) =>
+      form.parse(toNodeReadable(req) as any, (err, flds, fls) =>
+        err ? rej(err) : res({ fields: flds, files: fls })
+      )
+  );
 
   let imagePath: string | undefined;
   if (files.image) {
@@ -68,12 +68,10 @@ export async function PUT(
 }
 
 /* ---------- DELETE /api/products/[id] ---------- */
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_req: NextRequest, context: RouteContext) {
   await dbConnect();
-  const { id } = params; // ✅ KHÔNG await
+
+  const { id } = context.params;
 
   const deleted = await Product.findByIdAndDelete(id);
 
@@ -84,8 +82,5 @@ export async function DELETE(
     );
   }
 
-  return NextResponse.json({
-    message: "Xoá sản phẩm thành công",
-    deleted,
-  });
+  return NextResponse.json({ message: "Xoá sản phẩm thành công", deleted });
 }
