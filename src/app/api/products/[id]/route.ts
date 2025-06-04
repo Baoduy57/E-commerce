@@ -33,23 +33,26 @@ export async function PUT(
   await dbConnect();
   const { id } = await params; // 👈 phải await
 
+  // Parse form-data (multipart) --------------------------------------------
   const form = formidable({ keepExtensions: true });
   const { fields, files } = await new Promise<{ fields: Fields; files: Files }>(
-    (res, rej) =>
+    (resolve, reject) =>
       form.parse(toNodeReadable(req) as any, (err, flds, fls) =>
-        err ? rej(err) : res({ fields: flds, files: fls })
+        err ? reject(err) : resolve({ fields: flds, files: fls })
       )
   );
 
+  // Upload ảnh lên Cloudinary (nếu có) -------------------------------------
   let imagePath: string | undefined;
   if (files.image) {
     const file = Array.isArray(files.image) ? files.image[0] : files.image;
-    const uploadResult = await cloudinary.uploader.upload(file.filepath, {
+    const upload = await cloudinary.uploader.upload(file.filepath, {
       folder: "products",
     });
-    imagePath = uploadResult.secure_url;
+    imagePath = upload.secure_url;
   }
 
+  // Cập nhật sản phẩm -------------------------------------------------------
   const updated = await Product.findByIdAndUpdate(
     id,
     {
@@ -73,7 +76,6 @@ export async function DELETE(
   const { id } = await params; // 👈 phải await
 
   const deleted = await Product.findByIdAndDelete(id);
-
   if (!deleted) {
     return NextResponse.json(
       { message: "Không tìm thấy sản phẩm để xoá" },
