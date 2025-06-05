@@ -157,18 +157,18 @@ import { notFound } from "next/navigation";
 import Product, { IProduct } from "@/models/Product";
 import { dbConnect } from "@/lib/db";
 
-// ✅ Không cần định nghĩa type Props riêng (Next.js đã định nghĩa cho bạn)
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { id } = params; // ✅ KHÔNG cần await
+interface ProductPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default async function ProductDetailPage({ params }: ProductPageProps) {
+  const { id } = params; // ✅ Không dùng `await` ở đây
 
   await dbConnect();
 
   const product = (await Product.findById(id).lean()) as IProduct | null;
-
   if (!product) return notFound();
 
   return (
