@@ -157,6 +157,7 @@ import { notFound } from "next/navigation";
 import Product, { IProduct } from "@/models/Product";
 import { dbConnect } from "@/lib/db";
 
+// Next.js 15 vẫn dùng kiểu như sau cho route động:
 type ProductPageProps = {
   params: {
     id: string;
@@ -164,7 +165,8 @@ type ProductPageProps = {
 };
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const { id } = params; // ✅ KHÔNG dùng await
+  // ✅ KHÔNG dùng `await` ở đây
+  const { id } = params;
 
   await dbConnect();
 
