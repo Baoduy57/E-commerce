@@ -80,7 +80,6 @@
 //   });
 // }
 // export {};
-
 import { NextRequest, NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import Product from "@/models/Product";
@@ -94,19 +93,12 @@ export const config = {
   },
 };
 
-type Context = {
-  params: {
-    id: string;
-  };
-};
-
-/* ---------- GET /api/products/[id] ---------- */
-export async function GET(_req: NextRequest, context: Context) {
+// ✅ GET /api/products/[id]
+export async function GET(_req: NextRequest, { params }: any) {
   await dbConnect();
-  const { id } = context.params;
+  const { id } = params;
 
   const product = await Product.findById(id).lean();
-
   if (!product) {
     return NextResponse.json(
       { message: "Không tìm thấy sản phẩm" },
@@ -117,10 +109,10 @@ export async function GET(_req: NextRequest, context: Context) {
   return NextResponse.json(product);
 }
 
-/* ---------- PUT /api/products/[id] ---------- */
-export async function PUT(req: NextRequest, context: Context) {
+// ✅ PUT /api/products/[id]
+export async function PUT(req: NextRequest, { params }: any) {
   await dbConnect();
-  const { id } = context.params;
+  const { id } = params;
 
   const form = formidable({ keepExtensions: true });
   const stream = toNodeReadable(req);
@@ -157,10 +149,10 @@ export async function PUT(req: NextRequest, context: Context) {
   return NextResponse.json(updated);
 }
 
-/* ---------- DELETE /api/products/[id] ---------- */
-export async function DELETE(_req: NextRequest, context: Context) {
+// ✅ DELETE /api/products/[id]
+export async function DELETE(_req: NextRequest, { params }: any) {
   await dbConnect();
-  const { id } = context.params;
+  const { id } = params;
 
   const deleted = await Product.findByIdAndDelete(id);
   if (!deleted) {
@@ -170,8 +162,5 @@ export async function DELETE(_req: NextRequest, context: Context) {
     );
   }
 
-  return NextResponse.json({
-    message: "Xoá sản phẩm thành công",
-    deleted,
-  });
+  return NextResponse.json({ message: "Xoá sản phẩm thành công", deleted });
 }
