@@ -157,18 +157,19 @@ import { notFound } from "next/navigation";
 import Product, { IProduct } from "@/models/Product";
 import { dbConnect } from "@/lib/db";
 
-interface ProductPageProps {
+type ProductPageProps = {
   params: {
     id: string;
   };
-}
+};
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const { id } = params; // ✅ Không dùng `await` ở đây
+  const { id } = params; // ✅ KHÔNG dùng await
 
   await dbConnect();
 
   const product = (await Product.findById(id).lean()) as IProduct | null;
+
   if (!product) return notFound();
 
   return (
