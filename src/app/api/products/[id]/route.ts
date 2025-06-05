@@ -86,6 +86,7 @@ import Product from "@/models/Product";
 import formidable from "formidable";
 import { toNodeReadable } from "@/lib/toNodeReadable";
 import cloudinary from "@/lib/cloudinary";
+import { headers } from "next/headers";
 
 export const config = {
   api: {
@@ -93,10 +94,21 @@ export const config = {
   },
 };
 
+// ✅ Helper: lấy `id` từ URL
+function getIdFromUrl(req: NextRequest): string | null {
+  const url = new URL(req.url);
+  const segments = url.pathname.split("/");
+  return segments[segments.length - 1] || null;
+}
+
 // ✅ GET /api/products/[id]
-export async function GET(_req: NextRequest, { params }: any) {
+export async function GET(req: NextRequest) {
   await dbConnect();
-  const { id } = params;
+
+  const id = getIdFromUrl(req);
+  if (!id) {
+    return NextResponse.json({ message: "Thiếu ID" }, { status: 400 });
+  }
 
   const product = await Product.findById(id).lean();
   if (!product) {
@@ -110,9 +122,13 @@ export async function GET(_req: NextRequest, { params }: any) {
 }
 
 // ✅ PUT /api/products/[id]
-export async function PUT(req: NextRequest, { params }: any) {
+export async function PUT(req: NextRequest) {
   await dbConnect();
-  const { id } = params;
+
+  const id = getIdFromUrl(req);
+  if (!id) {
+    return NextResponse.json({ message: "Thiếu ID" }, { status: 400 });
+  }
 
   const form = formidable({ keepExtensions: true });
   const stream = toNodeReadable(req);
@@ -150,9 +166,13 @@ export async function PUT(req: NextRequest, { params }: any) {
 }
 
 // ✅ DELETE /api/products/[id]
-export async function DELETE(_req: NextRequest, { params }: any) {
+export async function DELETE(req: NextRequest) {
   await dbConnect();
-  const { id } = params;
+
+  const id = getIdFromUrl(req);
+  if (!id) {
+    return NextResponse.json({ message: "Thiếu ID" }, { status: 400 });
+  }
 
   const deleted = await Product.findByIdAndDelete(id);
   if (!deleted) {
