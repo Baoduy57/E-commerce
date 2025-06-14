@@ -5,14 +5,11 @@ import formidable from "formidable";
 import { toNodeReadable } from "@/lib/toNodeReadable";
 import cloudinary from "@/lib/cloudinary";
 
-// Tắt bodyParser cho formidable
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false },
 };
 
-// ✅ GET /api/products/[id]
+// GET /api/products/[id]
 export async function GET(req: NextRequest) {
   await dbConnect();
   const id = req.nextUrl.pathname.split("/").pop();
@@ -28,7 +25,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(product);
 }
 
-// ✅ PUT /api/products/[id]
+// PUT /api/products/[id]
 export async function PUT(req: NextRequest) {
   await dbConnect();
   const id = req.nextUrl.pathname.split("/").pop();
@@ -73,7 +70,7 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json(updated);
 }
 
-// ✅ DELETE /api/products/[id]
+// DELETE /api/products/[id]
 export async function DELETE(req: NextRequest) {
   await dbConnect();
   const id = req.nextUrl.pathname.split("/").pop();

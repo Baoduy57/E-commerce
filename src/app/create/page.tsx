@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function CreateProduct() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
     name: "",
@@ -13,6 +16,16 @@ export default function CreateProduct() {
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+      setLoading(false);
+    };
+
+    checkUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +47,25 @@ export default function CreateProduct() {
     router.refresh();
   };
 
+  if (loading)
+    return <p className="p-6">Đang kiểm tra trạng thái đăng nhập...</p>;
+
+  if (!user) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-xl font-semibold text-gray-600">
+          Bạn cần đăng nhập để tạo sản phẩm.
+        </h2>
+        <button
+          onClick={() => router.push("/login")}
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Đăng nhập
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded-md mt-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
@@ -41,7 +73,6 @@ export default function CreateProduct() {
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Tên sản phẩm */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Tên sản phẩm
@@ -55,7 +86,6 @@ export default function CreateProduct() {
           />
         </div>
 
-        {/* Mô tả */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Mô tả
@@ -69,7 +99,6 @@ export default function CreateProduct() {
           />
         </div>
 
-        {/* Giá */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Giá (₫)
@@ -83,7 +112,6 @@ export default function CreateProduct() {
           />
         </div>
 
-        {/* Hình ảnh */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Ảnh sản phẩm
@@ -97,7 +125,6 @@ export default function CreateProduct() {
             }}
             className="w-full"
           />
-
           {imageFile && (
             <div className="mt-3">
               <p className="text-sm text-gray-500 mb-1">Ảnh xem trước:</p>
@@ -110,7 +137,6 @@ export default function CreateProduct() {
           )}
         </div>
 
-        {/* Nút submit */}
         <button
           type="submit"
           className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded transition"

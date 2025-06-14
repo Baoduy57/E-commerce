@@ -2,10 +2,29 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { IProduct } from "@/models/Product";
 
 export default function Home() {
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+      setLoading(false);
+
+      if (user) {
+        fetchProducts();
+      }
+    };
+
+    getUser();
+  }, []);
 
   const fetchProducts = async () => {
     const res = await fetch("/api/products", { cache: "no-store" });
@@ -18,9 +37,22 @@ export default function Home() {
     fetchProducts();
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  if (loading) return <p className="p-6">Đang kiểm tra đăng nhập...</p>;
+
+  if (!user)
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-xl font-semibold text-gray-600">
+          Bạn cần đăng nhập để xem danh sách sản phẩm.
+        </h2>
+        <Link
+          href="/login"
+          className="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Đăng nhập
+        </Link>
+      </div>
+    );
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">

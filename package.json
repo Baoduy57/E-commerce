@@ -9,6 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/auth-helpers-react": "^0.5.0",
+    "@supabase/auth-helpers-shared": "^0.7.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/formidable": "^3.4.5",
     "cloudinary": "^2.6.1",
