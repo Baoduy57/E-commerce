@@ -9,13 +9,43 @@ export const config = {
   api: { bodyParser: false },
 };
 
-// GET /api/products
-export async function GET() {
+// GET /api/products?page=1&limit=8&search=&filter=
+export async function GET(req: NextRequest) {
   await dbConnect();
 
+  const { searchParams } = new URL(req.url);
+
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "8");
+  const search = searchParams.get("search") || "";
+  const filter = searchParams.get("filter") || "";
+
+  const skip = (page - 1) * limit;
+
+  const query: any = {};
+
+  if (search) {
+    query.name = { $regex: search, $options: "i" };
+  }
+
+  if (filter === "low") {
+    query.price = { $lt: 100_000 };
+  } else if (filter === "mid") {
+    query.price = { $gte: 100_000, $lte: 500_000 };
+  } else if (filter === "high") {
+    query.price = { $gt: 500_000 };
+  }
+
   try {
-    const products = await Product.find({});
-    return NextResponse.json(products);
+    const total = await Product.countDocuments(query);
+    const products = await Product.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const hasMore = skip + products.length < total;
+
+    return NextResponse.json({ products, hasMore, total });
   } catch (error) {
     return NextResponse.json({ message: "Lỗi server", error }, { status: 500 });
   }

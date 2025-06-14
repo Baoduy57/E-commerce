@@ -26,31 +26,72 @@ export default function LoginPage() {
   };
 
   return (
-    <form onSubmit={handleLogin} className="max-w-sm mx-auto p-6 space-y-4">
-      <h2 className="text-2xl font-bold">Đăng nhập</h2>
-      {error && <p className="text-red-600">{error}</p>}
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full p-2 border rounded"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Mật khẩu"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full p-2 border rounded"
-        required
-      />
+    <form
+      onSubmit={handleLogin}
+      className="max-w-md mx-auto p-8 bg-white rounded-xl shadow-md space-y-6"
+    >
+      <h2 className="text-3xl font-bold text-center text-gray-800">
+        Đăng nhập
+      </h2>
+
+      {error && (
+        <div className="bg-red-100 text-red-700 px-4 py-2 rounded text-sm">
+          {error}
+        </div>
+      )}
+
+      <div>
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          placeholder="example@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Mật khẩu
+        </label>
+        <input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
       <button
         type="submit"
-        className="bg-blue-500 text-white px-4 py-2 rounded"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition"
       >
         Đăng nhập
       </button>
+
+      <p className="text-sm text-center text-gray-600">
+        Chưa có tài khoản?{" "}
+        <a
+          href="/register"
+          className="text-blue-600 hover:underline font-medium"
+        >
+          Đăng ký ngay
+        </a>
+      </p>
     </form>
   );
 }

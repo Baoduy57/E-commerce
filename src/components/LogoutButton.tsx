@@ -12,7 +12,10 @@ export default function LogoutButton() {
   };
 
   return (
-    <button onClick={handleLogout} className="text-red-600">
+    <button
+      onClick={handleLogout}
+      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
+    >
       Đăng xuất
     </button>
   );

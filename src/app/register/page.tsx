@@ -17,7 +17,8 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: "https://e-commerce-vqqd.onrender.com/login",
+        emailRedirectTo: "http://localhost:3000/login",
+        // emailRedirectTo: "https://e-commerce-vqqd.onrender.com/login",
       },
     });
 
@@ -30,31 +31,69 @@ export default function RegisterPage() {
   };
 
   return (
-    <form onSubmit={handleRegister} className="max-w-sm mx-auto p-6 space-y-4">
-      <h2 className="text-2xl font-bold">Đăng ký</h2>
-      {error && <p className="text-red-600">{error}</p>}
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full p-2 border rounded"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Mật khẩu"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full p-2 border rounded"
-        required
-      />
+    <form
+      onSubmit={handleRegister}
+      className="max-w-md mx-auto p-8 bg-white rounded-xl shadow-md space-y-6"
+    >
+      <h2 className="text-3xl font-bold text-center text-gray-800">
+        Tạo tài khoản
+      </h2>
+
+      {error && (
+        <div className="bg-red-100 text-red-700 px-4 py-2 rounded text-sm">
+          {error}
+        </div>
+      )}
+
+      <div>
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          placeholder="example@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Mật khẩu
+        </label>
+        <input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+
       <button
         type="submit"
-        className="bg-green-600 text-white px-4 py-2 rounded"
+        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition"
       >
         Đăng ký
       </button>
+
+      <p className="text-sm text-center text-gray-600">
+        Bạn đã có tài khoản?{" "}
+        <a href="/login" className="text-green-600 hover:underline font-medium">
+          Đăng nhập ngay
+        </a>
+      </p>
     </form>
   );
 }

@@ -1,23 +1,18 @@
 // src/middleware.ts
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    // Trả về 401 với body rỗng (tránh lỗi JSON trong middleware)
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  // ⚠️ Chỉ gọi getSession() để đồng bộ cookie, KHÔNG gọi getUser()
+  await supabase.auth.getSession();
 
   return res;
 }
 
+// ⚠️ Bao toàn bộ route (trừ static assets)
 export const config = {
-  matcher: ["/api/products/:path*", "/api/protected/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
