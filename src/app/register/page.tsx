@@ -17,8 +17,8 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: "http://localhost:3000/login",
-        // emailRedirectTo: "https://e-commerce-vqqd.onrender.com/login",
+        // emailRedirectTo: "http://localhost:3000/login",
+        emailRedirectTo: "https://e-commerce-vqqd.onrender.com/login",
       },
     });
 
