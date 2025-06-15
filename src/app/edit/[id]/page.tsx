@@ -1,10 +1,13 @@
 "use client";
 
+import { supabase } from "@/lib/supabaseClient";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function EditProduct() {
   const { id } = useParams<{ id: string }>();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -14,6 +17,16 @@ export default function EditProduct() {
     image: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+      setLoading(false);
+    };
+
+    checkUser();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +60,25 @@ export default function EditProduct() {
     router.push("/");
     router.refresh();
   };
+
+  if (loading)
+    return <p className="p-6">Đang kiểm tra trạng thái đăng nhập...</p>;
+
+  if (!user) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-xl font-semibold text-gray-600">
+          Bạn cần đăng nhập để sửa sản phẩm.
+        </h2>
+        <button
+          onClick={() => router.push("/login")}
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Đăng nhập
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded-md mt-6">

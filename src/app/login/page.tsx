@@ -20,8 +20,8 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.refresh(); // đảm bảo layout (navbar...) cập nhật lại user
       router.push("/");
+      router.refresh(); // đảm bảo layout (navbar...) cập nhật lại user
     }
   };
 
