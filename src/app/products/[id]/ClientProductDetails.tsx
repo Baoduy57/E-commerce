@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IProduct } from "@/models/Product";
+import { useCart } from "@/context/CartContext"; // thêm ở đầu file
 
 export default function ClientProductDetails({
   product,
@@ -13,6 +14,9 @@ export default function ClientProductDetails({
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [updating, setUpdating] = useState(false);
+  const { fetchCart } = useCart();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -20,9 +24,47 @@ export default function ClientProductDetails({
       setUser(data.user);
       setLoading(false);
     };
-
     checkUser();
   }, []);
+
+  const handleAddToCart = async (redirectToCart: boolean) => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setUpdating(true);
+
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user.id,
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: quantity,
+        }),
+      });
+      if (res.ok) {
+        await fetchCart(); // ✅ đúng cách để cập nhật cart sau khi thêm
+        if (redirectToCart) {
+          router.push("/cart");
+        }
+      } else {
+        const err = await res.json();
+        console.error("Lỗi khi thêm vào giỏ:", err.error || "Unknown error");
+      }
+    } catch (error) {
+      console.error("Lỗi khi gọi API:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const increment = () => setQuantity((q) => q + 1);
+  const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1)); // Không cho nhỏ hơn 1
 
   if (loading) return <p className="p-6">Đang kiểm tra đăng nhập...</p>;
 
@@ -54,7 +96,6 @@ export default function ClientProductDetails({
             />
           </div>
         )}
-
         <div className="space-y-6">
           <h1 className="text-4xl font-bold text-gray-800">{product.name}</h1>
           <p className="text-gray-600 leading-relaxed text-lg">
@@ -64,11 +105,38 @@ export default function ClientProductDetails({
             {Number(product.price).toLocaleString()}₫
           </div>
 
+          <div className="flex items-center gap-4">
+            <span className="text-gray-700 font-medium">Số lượng:</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={decrement}
+                className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+              >
+                −
+              </button>
+              <span className="w-6 text-center">{quantity}</span>
+              <button
+                onClick={increment}
+                className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
           <div className="flex gap-4 pt-4">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition text-sm font-medium">
+            <button
+              disabled={updating}
+              onClick={() => handleAddToCart(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition text-sm font-medium disabled:opacity-50"
+            >
               Mua ngay
             </button>
-            <button className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-md transition text-sm font-medium">
+            <button
+              disabled={updating}
+              onClick={() => handleAddToCart(false)}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-md transition text-sm font-medium disabled:opacity-50"
+            >
               Thêm vào giỏ
             </button>
           </div>

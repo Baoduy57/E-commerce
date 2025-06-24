@@ -2,6 +2,7 @@
 import "./globals.css";
 import { ReactNode } from "react"; // tùy chọn nếu bạn tách metadata riêng
 import Navbar from "@/components/Navbar";
+import { CartProvider } from "@/context/CartContext";
 
 export const metadata = {
   title: "E-Commerce App",
@@ -16,8 +17,10 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="p-4">
-        <Navbar />
-        <main>{children}</main>
+        <CartProvider>
+          <Navbar />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
