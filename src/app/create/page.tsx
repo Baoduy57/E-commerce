@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { toast } from "react-toastify";
 
 export default function CreateProduct() {
   const router = useRouter();
@@ -38,13 +39,24 @@ export default function CreateProduct() {
       formData.append("image", imageFile);
     }
 
-    await fetch("/api/products", {
-      method: "POST",
-      body: formData,
-    });
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        body: formData,
+      });
 
-    router.push("/");
-    router.refresh();
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Lỗi không xác định");
+      }
+
+      toast.success("🎉 Tạo sản phẩm thành công!");
+      router.push("/");
+      router.refresh();
+    } catch (err: any) {
+      toast.error("❌ " + err.message);
+    }
   };
 
   if (loading)

@@ -3,31 +3,36 @@
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-toastify"; // 👉 Toastify
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // 👉 trạng thái loading
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        // emailRedirectTo: "http://localhost:3000/login",
         emailRedirectTo: "https://e-commerce-vqqd.onrender.com/login",
       },
     });
 
     if (error) {
-      setError(error.message);
+      toast.error(`❌ ${error.message}`);
     } else {
-      alert("Đăng ký thành công! Vui lòng kiểm tra email để xác minh.");
+      toast.success(
+        "✅ Đăng ký thành công! Vui lòng kiểm tra email để xác minh."
+      );
       router.push("/login");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -38,12 +43,6 @@ export default function RegisterPage() {
       <h2 className="text-3xl font-bold text-center text-gray-800">
         Tạo tài khoản
       </h2>
-
-      {error && (
-        <div className="bg-red-100 text-red-700 px-4 py-2 rounded text-sm">
-          {error}
-        </div>
-      )}
 
       <div>
         <label
@@ -83,9 +82,14 @@ export default function RegisterPage() {
 
       <button
         type="submit"
-        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition"
+        disabled={loading}
+        className={`w-full text-white font-semibold py-2 rounded transition ${
+          loading
+            ? "bg-green-400 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
+        }`}
       >
-        Đăng ký
+        {loading ? "Đang xử lý..." : "Đăng ký"}
       </button>
 
       <p className="text-sm text-center text-gray-600">

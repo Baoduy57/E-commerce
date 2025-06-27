@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IProduct } from "@/models/Product";
-import { useCart } from "@/context/CartContext"; // thêm ở đầu file
+import { useCart } from "@/context/CartContext";
+import { toast } from "react-toastify"; // 👈 Toastify
 
 export default function ClientProductDetails({
   product,
@@ -19,16 +20,17 @@ export default function ClientProductDetails({
   const { fetchCart } = useCart();
 
   useEffect(() => {
-    const checkUser = async () => {
+    (async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
       setLoading(false);
-    };
-    checkUser();
+    })();
   }, []);
 
+  // ------------------ HANDLERS ------------------
   const handleAddToCart = async (redirectToCart: boolean) => {
     if (!user) {
+      toast.info("Vui lòng đăng nhập trước khi mua hàng");
       router.push("/login");
       return;
     }
@@ -42,29 +44,27 @@ export default function ClientProductDetails({
           "Content-Type": "application/json",
           "x-user-id": user.id,
         },
-        body: JSON.stringify({
-          productId: product._id,
-          quantity: quantity,
-        }),
+        body: JSON.stringify({ productId: product._id, quantity }),
       });
-      if (res.ok) {
-        await fetchCart(); // ✅ đúng cách để cập nhật cart sau khi thêm
-        if (redirectToCart) {
-          router.push("/cart");
-        }
-      } else {
-        const err = await res.json();
-        console.error("Lỗi khi thêm vào giỏ:", err.error || "Unknown error");
-      }
-    } catch (error) {
-      console.error("Lỗi khi gọi API:", error);
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Không thể thêm vào giỏ");
+
+      await fetchCart(); // đồng bộ cart
+      toast.success("🛒 Đã thêm vào giỏ!");
+
+      if (redirectToCart) router.push("/cart");
+    } catch (err: any) {
+      toast.error(`❌ ${err.message || "Có lỗi xảy ra"}`);
     } finally {
       setUpdating(false);
     }
   };
 
+  // ------------------ UI ------------------
   const increment = () => setQuantity((q) => q + 1);
-  const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1)); // Không cho nhỏ hơn 1
+  const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   if (loading) return <p className="p-6">Đang kiểm tra đăng nhập...</p>;
 
@@ -88,14 +88,13 @@ export default function ClientProductDetails({
     <div className="max-w-6xl mx-auto px-6 py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         {product.image && (
-          <div className="w-full rounded-lg overflow-hidden shadow-md">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-[400px] object-cover"
-            />
-          </div>
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-[400px] object-cover rounded-lg shadow-md"
+          />
         )}
+
         <div className="space-y-6">
           <h1 className="text-4xl font-bold text-gray-800">{product.name}</h1>
           <p className="text-gray-600 leading-relaxed text-lg">
@@ -105,39 +104,52 @@ export default function ClientProductDetails({
             {Number(product.price).toLocaleString()}₫
           </div>
 
+          {/* Số lượng */}
           <div className="flex items-center gap-4">
             <span className="text-gray-700 font-medium">Số lượng:</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={decrement}
-                className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+                className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 font-bold"
               >
                 −
               </button>
               <span className="w-6 text-center">{quantity}</span>
               <button
                 onClick={increment}
-                className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 text-lg font-bold"
+                className="w-8 h-8 rounded bg-gray-200 hover:bg-gray-300 font-bold"
               >
                 +
               </button>
             </div>
           </div>
 
+          {/* Nút hành động */}
           <div className="flex gap-4 pt-4">
             <button
               disabled={updating}
               onClick={() => handleAddToCart(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition text-sm font-medium disabled:opacity-50"
+              className={`px-6 py-2 rounded-md text-sm font-medium text-white transition
+                ${
+                  updating
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
             >
-              Mua ngay
+              {updating ? "Đang xử lý..." : "Mua ngay"}
             </button>
+
             <button
               disabled={updating}
               onClick={() => handleAddToCart(false)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-md transition text-sm font-medium disabled:opacity-50"
+              className={`px-6 py-2 rounded-md text-sm font-medium transition
+                ${
+                  updating
+                    ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                }`}
             >
-              Thêm vào giỏ
+              {updating ? "..." : "Thêm vào giỏ"}
             </button>
           </div>
         </div>

@@ -3,15 +3,20 @@
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -19,9 +24,12 @@ export default function LoginPage() {
 
     if (error) {
       setError(error.message);
+      toast.error(`❌ ${error.message}`);
+      setIsLoading(false);
     } else {
+      toast.success("🎉 Đăng nhập thành công!");
       router.push("/");
-      router.refresh(); // đảm bảo layout (navbar...) cập nhật lại user
+      router.refresh();
     }
   };
 
@@ -78,9 +86,14 @@ export default function LoginPage() {
 
       <button
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition"
+        disabled={isLoading}
+        className={`w-full font-semibold py-2 rounded transition text-white ${
+          isLoading
+            ? "bg-blue-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
+        }`}
       >
-        Đăng nhập
+        {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
       </button>
 
       <p className="text-sm text-center text-gray-600">

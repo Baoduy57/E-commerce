@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "react-toastify";
 
 export default function OrderDetailsPage() {
   const { user } = useAuth();
@@ -10,35 +11,58 @@ export default function OrderDetailsPage() {
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
 
+  /* ------------------ lấy đơn ------------------ */
   useEffect(() => {
     if (!user) return;
-    fetch(`/api/orders/${params.id}`, {
-      headers: { "x-user-id": user.id },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) return;
-        setOrder(data);
-      });
+    fetch(`/api/orders/${params.id}`, { headers: { "x-user-id": user.id } })
+      .then((r) => r.json())
+      .then((d) => (d.error ? toast.error(d.error) : setOrder(d)));
   }, [user]);
 
+  /* ------------------ Huỷ đơn ------------------ */
   const handleCancel = async () => {
     if (!confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
-    const res = await fetch(`/api/orders/${params.id}`, {
-      method: "DELETE",
-      headers: { "x-user-id": user.id },
+
+    const res = await fetch(`/api/orders/${params.id}/set-status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": user!.id,
+      },
+      body: JSON.stringify({ status: "Đã hủy" }),
     });
+
+    const data = await res.json();
     if (res.ok) {
-      alert("Đã huỷ đơn hàng");
-      router.push("/orders");
-    } else {
-      alert("Lỗi khi huỷ đơn hàng");
-    }
+      toast.success("Đã huỷ đơn hàng");
+      setOrder(data); // đơn đã chuyển sang "Đã hủy"
+    } else toast.error(data.error || "Lỗi khi huỷ đơn hàng");
   };
 
+  /* ------------------ Thanh toán ------------------ */
+  const handlePayment = async () => {
+    if (!confirm("Bạn có chắc muốn thanh toán đơn hàng này?")) return;
+
+    const res = await fetch(`/api/orders/${params.id}/pay`, {
+      method: "POST",
+      headers: { "x-user-id": user!.id },
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      toast.success("Thanh toán thành công");
+      setOrder(data.order);
+    } else toast.error(data.error || "Lỗi khi thanh toán");
+  };
+
+  /* ------------------ UI ------------------ */
   if (!user)
     return <p className="p-6">Vui lòng đăng nhập để xem chi tiết đơn.</p>;
   if (!order) return <p className="p-6">Đang tải đơn hàng...</p>;
+
+  const canPay =
+    order.paymentMethod === "online" && order.status === "Chờ thanh toán";
+  const canCancel = ["Chờ thanh toán", "Chờ xác nhận"].includes(order.status);
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-6">
@@ -46,11 +70,19 @@ export default function OrderDetailsPage() {
         🧾 Chi tiết đơn hàng #{order._id.slice(-6).toUpperCase()}
       </h1>
 
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-2">
         Ngày đặt:{" "}
         {order.createdAt
           ? new Date(order.createdAt).toLocaleString("vi-VN")
           : "N/A"}
+      </p>
+      <p className="text-sm text-gray-600 mb-6">
+        Phương thức thanh toán:{" "}
+        <strong className="text-gray-800">
+          {order.paymentMethod === "cod"
+            ? "Thanh toán khi nhận hàng"
+            : "Thanh toán online"}
+        </strong>
       </p>
 
       <div className="space-y-6">
@@ -89,24 +121,37 @@ export default function OrderDetailsPage() {
               ? "bg-red-100 text-red-700"
               : order.status === "Đã giao"
               ? "bg-green-100 text-green-700"
+              : order.status === "Đã thanh toán"
+              ? "bg-blue-100 text-blue-700"
               : "bg-yellow-100 text-yellow-800"
           }`}
         >
-          Trạng thái: {order.status || "Đã đặt"}
+          Trạng thái: {order.status}
         </span>
         <p className="text-xl font-bold text-green-700">
           Tổng cộng: {order.totalAmount.toLocaleString("vi-VN")}₫
         </p>
       </div>
 
-      {order.status === "Đã đặt" && (
-        <div className="mt-6 text-right">
-          <button
-            onClick={handleCancel}
-            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded"
-          >
-            Huỷ đơn hàng
-          </button>
+      {/* Nút hành động */}
+      {order.status !== "Đã hủy" && (
+        <div className="mt-6 flex gap-4 justify-end">
+          {canPay && (
+            <button
+              onClick={handlePayment}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded"
+            >
+              Thanh toán
+            </button>
+          )}
+          {canCancel && (
+            <button
+              onClick={handleCancel}
+              className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded"
+            >
+              Huỷ đơn hàng
+            </button>
+          )}
         </div>
       )}
     </div>

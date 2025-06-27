@@ -3,11 +3,13 @@
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function EditProduct() {
   const { id } = useParams<{ id: string }>();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -43,6 +45,7 @@ export default function EditProduct() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true); // 👉 bắt đầu loading
 
     const formData = new FormData();
     formData.append("name", form.name);
@@ -52,13 +55,26 @@ export default function EditProduct() {
       formData.append("image", imageFile);
     }
 
-    await fetch(`/api/products/${id}`, {
-      method: "PUT",
-      body: formData,
-    });
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        body: formData,
+      });
 
-    router.push("/");
-    router.refresh();
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Cập nhật thất bại");
+      }
+
+      toast.success("🎉 Cập nhật sản phẩm thành công!");
+      router.push("/");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(`❌ ${error.message}`);
+    } finally {
+      setIsSubmitting(false); // 👉 kết thúc loading
+    }
   };
 
   if (loading)
@@ -168,9 +184,12 @@ export default function EditProduct() {
         {/* Nút cập nhật */}
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded transition"
+          disabled={isSubmitting}
+          className={`bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded transition ${
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
-          ✅ Cập nhật sản phẩm
+          {isSubmitting ? "Đang cập nhật..." : "✅ Cập nhật sản phẩm"}
         </button>
       </form>
     </div>

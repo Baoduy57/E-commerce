@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IProduct } from "@/models/Product";
+import { toast } from "react-toastify"; // ✅
 
 export default function Home() {
   const [products, setProducts] = useState<IProduct[]>([]);
@@ -21,10 +22,6 @@ export default function Home() {
       } = await supabase.auth.getUser();
       setUser(user);
       setLoading(false);
-
-      if (user) {
-        fetchProducts();
-      }
     };
 
     getUser();
@@ -32,26 +29,41 @@ export default function Home() {
 
   useEffect(() => {
     if (user) fetchProducts();
-  }, [searchTerm, page, filter]);
+  }, [searchTerm, page, filter, user]);
 
   const fetchProducts = async () => {
-    const query = new URLSearchParams({
-      search: searchTerm,
-      page: String(page),
-      limit: "8",
-      filter,
-    }).toString();
+    try {
+      const query = new URLSearchParams({
+        search: searchTerm,
+        page: String(page),
+        limit: "8",
+        filter,
+      }).toString();
 
-    const res = await fetch(`/api/products?${query}`, { cache: "no-store" });
-    const data = await res.json();
-    setProducts(data.products);
-    setHasMore(data.hasMore);
+      const res = await fetch(`/api/products?${query}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Không thể tải sản phẩm.");
+      const data = await res.json();
+      setProducts(data.products);
+      setHasMore(data.hasMore);
+    } catch (err: any) {
+      toast.error(err.message || "Đã xảy ra lỗi khi tải sản phẩm.");
+    }
   };
 
   const deleteProduct = async (id: string) => {
-    if (!confirm("Xoá sản phẩm này?")) return;
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
-    fetchProducts();
+    if (!confirm("Bạn có chắc chắn muốn xoá sản phẩm này?")) return;
+
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Xóa thất bại.");
+      }
+      toast.success("🗑️ Đã xoá sản phẩm thành công!");
+      fetchProducts(); // Làm mới lại danh sách
+    } catch (err: any) {
+      toast.error(err.message || "❌ Xóa sản phẩm thất bại.");
+    }
   };
 
   if (loading) return <p className="p-6">Đang kiểm tra đăng nhập...</p>;
@@ -76,6 +88,7 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
+      {/* Tiêu đề & nút thêm */}
       <div className="flex justify-between items-center mb-10">
         <h1 className="text-4xl font-bold text-gray-800">
           🛍️ Danh sách sản phẩm
@@ -88,13 +101,14 @@ export default function Home() {
         </Link>
       </div>
 
+      {/* Thanh tìm kiếm và bộ lọc */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <input
           type="text"
           placeholder="Tìm sản phẩm..."
           value={searchTerm}
           onChange={(e) => {
-            setPage(1); // Reset về trang đầu mỗi khi search
+            setPage(1);
             setSearchTerm(e.target.value);
           }}
           className="w-full sm:max-w-sm p-2 border rounded"
@@ -102,7 +116,7 @@ export default function Home() {
         <select
           value={filter}
           onChange={(e) => {
-            setPage(1); // Reset trang khi filter thay đổi
+            setPage(1);
             setFilter(e.target.value);
           }}
           className="w-full sm:w-auto p-2 border rounded"
@@ -114,6 +128,7 @@ export default function Home() {
         </select>
       </div>
 
+      {/* Danh sách sản phẩm */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {products.map((p) => (
           <div
@@ -159,6 +174,7 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Phân trang */}
       <div className="mt-10 flex justify-center gap-4">
         <button
           onClick={() => setPage((prev) => Math.max(1, prev - 1))}
